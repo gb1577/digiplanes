@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Glass FM · Digiplanes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -219,7 +219,8 @@
     background: var(--bg); border-top: 1px solid var(--hair); }
   @media (pointer: coarse) {
     /* iPhone: quick repeated taps (knobs, keys, buttons) would double-tap-zoom the page; pinch still works */
-    html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+    html, body { -webkit-text-size-adjust: 100%; }
+    * { touch-action: manipulation; } /* on every element: iOS doesn't reliably apply it from body alone */
     .field input, .field select { font-size: 16px; } /* under 16px, iOS zooms in when a field is focused */
     .keys { height: 150px; }
     .keys2 { display: none; } .touchnote { display: block; }
@@ -349,7 +350,7 @@
 <body>
 <div id="frame"><i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i></div>
 
-<div id="power">
+<div id="power" class="hidden">
   <div class="psheet">
     <h2>GLASS·FM</h2>
     <p id="powerMsg">Loading…</p>
@@ -494,6 +495,8 @@
 function showError(msg) {
   const p = document.querySelector('#powerMsg');
   if (p) { p.textContent = msg; p.style.color = 'var(--danger)'; }
+  document.querySelector('#power')?.classList.remove('hidden'); // the power sheet now only appears to report a problem
+  document.querySelector('#powerBtn')?.classList.add('hidden');
 }
 addEventListener('error', (e) => showError('Error: ' + (e.message || e.error)));
 addEventListener('unhandledrejection', (e) => showError('Error: ' + (e.reason?.message || e.reason)));
@@ -1155,20 +1158,29 @@ document.querySelectorAll('#ptabs [data-p]').forEach((b) => (b.onclick = () => s
 // ---------- boot ----------
 buildPatchKnobs(); renderPresets(); lcdPatch();
 renderMidi();
-$('#powerBtn').onclick = async () => {
+// Browsers only let a page start sound from a tap, click or key press, so audio powers on with the first one
+// anywhere on the page. This runs in the capture phase, before the key or button that was touched, and
+// engine.start() builds the whole audio graph synchronously, so that first touch already makes sound.
+const GESTURES = ['pointerdown', 'keydown', 'touchend', 'click'];
+let powered = false;
+function powerOn() {
+  if (powered) return;
+  powered = true;
+  GESTURES.forEach((t) => removeEventListener(t, powerOn, true));
   try {
-    $('#powerMsg').textContent = 'Starting audio…';
     window.iosAudio?.(); // iPhone: play through the silent switch
-    await engine.start();
+    engine.start().catch((err) => showError('Audio could not start: ' + (err?.message || err)));
     engine.setVolume(state.volume, state.muted);
-    $('#power').classList.add('hidden');
     renderMute();
-    if (await midiGranted()) initMidi();
+    midiGranted().then((ok) => ok && initMidi());
   } catch (err) {
     showError('Audio could not start: ' + (err?.message || err));
   }
-};
-$('#powerMsg').textContent = `Starts audio. Play with your computer keys, or plug in a MIDI keyboard and press CONNECT MIDI. ${SONGS.length} songs from the Digiplanes soundtrack are loaded.`;
+}
+GESTURES.forEach((t) => addEventListener(t, powerOn, { capture: true }));
+// touch screens: like the game, the synth never zooms. iOS ignores user-scalable=no for pinches, so stop them here
+// (double-tap zoom is already off through touch-action in the stylesheet)
+if (matchMedia('(pointer: coarse)').matches) document.addEventListener('gesturestart', (e) => e.preventDefault());
 window.glassfm = { engine, state, player, applyPalette }; // handy for debugging in the console
 }
 </script>
