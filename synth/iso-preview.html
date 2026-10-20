@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glass FM · Isometric Preview</title>
+<style>
+  /* Preview only: the real synth (index.html) in an iframe, laid on a digiplane as a raised slab and
+     seen from the game's isometric angle. The synth stays live, so its knobs and keys still respond. */
+  :root { --bg: #23257a; --plane: #2a2c86; --line: #5fcdf5; --ink: #e9ecff; --side: #1b1d63; --side2: #15175a; }
+  html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; font-family: 'IBM Plex Mono', ui-monospace, monospace; color: var(--ink); }
+  .stage { position: fixed; inset: 0; }
+  /* centred by its own size (1280 x 960), so it stays centred even when wider than the window */
+  .iso { position: absolute; left: 50%; top: 50%; margin: -480px 0 0 -640px; transform: rotateX(56deg) rotateZ(-36deg); transform-style: preserve-3d; }
+  /* slight: tipped back a little and turned a touch, so it still reads (and plays) like a flat page */
+  body.slight .stage { perspective: 2600px; }
+  body.slight .iso { transform: rotateX(24deg) rotateZ(-6deg); }
+  /* play: seen straight on and tipped back like the game's camera, with only a little perspective,
+     so the keyboard stays level and the far edge barely shrinks */
+  body.play .stage { perspective: 7000px; }
+  body.play .iso { transform: rotateX(42deg); }
+  body.play .floor { mask-image: radial-gradient(closest-side, #000 45%, transparent); }
+  body.slight .floor { mask-image: radial-gradient(closest-side, #000 35%, transparent); }
+  .tag button { font: inherit; letter-spacing: .25em; color: inherit; background: transparent; border: 1px solid color-mix(in srgb, var(--ink) 38%, transparent);
+    padding: 3px 9px; margin-left: 6px; cursor: pointer; opacity: .7; }
+  .tag button.on { opacity: 1; color: #ffd27a; border-color: #ffd27a; }
+  /* floor grid around the slab, like the game's plane */
+  .floor { position: absolute; left: 50%; top: 50%; width: 3600px; height: 3600px; translate: -50% -50%;
+    background:
+      linear-gradient(color-mix(in srgb, var(--line) 30%, transparent) 1px, transparent 1px) 0 0 / 160px 160px,
+      linear-gradient(90deg, color-mix(in srgb, var(--line) 30%, transparent) 1px, transparent 1px) 0 0 / 160px 160px,
+      var(--plane);
+    mask-image: radial-gradient(closest-side, #000 50%, transparent); }
+  /* soft shadow the slab casts on the floor */
+  .shadow { position: absolute; inset: 0; translate: 40px 60px; background: rgba(5, 6, 40, .55); filter: blur(30px); }
+  /* the slab: synth on the top face, two lit side faces give it thickness */
+  .slab { position: relative; width: 1280px; height: 960px; transform: translateZ(26px); transform-style: preserve-3d;
+    outline: 2px solid var(--line); }
+  .slab::before, .slab::after { content: ''; position: absolute; background: var(--side); }
+  .slab::before { left: 0; top: 100%; width: 100%; height: 26px; transform-origin: top; transform: rotateX(-90deg);
+    background: linear-gradient(var(--side), var(--side2)); border-top: 2px solid var(--line); }
+  .slab::after { left: 100%; top: 0; width: 26px; height: 100%; transform-origin: left; transform: rotateY(90deg);
+    background: linear-gradient(90deg, var(--side2), #101250); border-left: 2px solid var(--line); }
+  iframe { display: block; width: 100%; height: 100%; border: 0; background: var(--plane); }
+  .tag { position: fixed; left: 24px; top: 20px; font-size: 11px; letter-spacing: .3em; opacity: .8; }
+  .tag b { color: #8fe8ff; font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="tag"><b>GLASS·FM</b> · ISOMETRIC PREVIEW <button data-tilt="slight">SLIGHT</button><button data-tilt="play">PLAYABLE ISO</button><button data-tilt="full">FULL</button></div>
+<div class="stage">
+  <div class="iso" id="iso">
+    <div class="floor"></div>
+    <div class="shadow"></div>
+    <div class="slab" id="slab"><iframe src="index.html" title="Glass FM synth"></iframe></div>
+  </div>
+</div>
+<script>
+  // fit the tilted slab to the window
+  const iso = document.getElementById('iso'), slab = document.getElementById('slab');
+  const fit = () => {
+    iso.style.scale = '1';
+    const r = slab.getBoundingClientRect();
+    iso.style.scale = String(Math.min(innerWidth * 0.9 / r.width, innerHeight * 0.86 / r.height));
+  };
+  addEventListener('resize', fit);
+  // ?tilt=slight / play / full; play (playable isometric) is the default
+  const setTilt = (t) => {
+    if (!['slight', 'play', 'full'].includes(t)) t = 'play';
+    document.body.className = t;
+    document.querySelectorAll('[data-tilt]').forEach((b) => b.classList.toggle('on', b.dataset.tilt === t));
+    fit();
+  };
+  document.querySelectorAll('[data-tilt]').forEach((b) => (b.onclick = () => setTilt(b.dataset.tilt)));
+  setTilt(new URLSearchParams(location.search).get('tilt'));
+</script>
+</body>
+</html>

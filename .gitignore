@@ -1,0 +1,12 @@
+node_modules/
+.claude/
+
+# dev screenshots (game.shot) and reference images
+shots/
+ref/
+
+# source audio and experiments: large, not used by the game
+*.wav
+music/fm-tests/
+music/electro-synth-age/
+music/mp3/

@@ -1,0 +1,17 @@
+{
+  "name": "digi-planes",
+  "version": "1.0.0",
+  "description": "A small Three.js browser game drawn like a technical drawing",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node music/fm/check.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "three": "^0.169.0"
+  },
+  "private": true
+}
