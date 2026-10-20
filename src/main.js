@@ -147,6 +147,17 @@ function disposeScene(scene) {
   });
 }
 
+// Phones and tablets only allow sound after a tap, and on iPhone a drag doesn't count as one. So on touch
+// screens the first plane waits on its title sheet for a tap: that tap starts the music and the run together.
+let waitTap = TOUCH;
+function startFromTap() {
+  if (!waitTap) return;
+  waitTap = false;
+  sound.start();
+  overlay.classList.remove('on');
+}
+for (const t of ['touchend', 'click']) addEventListener(t, startFromTap, { capture: true, passive: true });
+
 function loadLevel(i) {
   levelIdx = (i + LEVELS.length) % LEVELS.length;
   const level = LEVELS[levelIdx];
@@ -159,7 +170,9 @@ function loadLevel(i) {
   if (mode === modes.cage) {
     setThemeUI(THEMES[level.theme]);
     const extra = level.colorMatch ? ' Marbles matching the <b>portal colour</b> score big.' : '';
-    showOverlay(level.title, `Bank <b>${level.goal}</b> marbles at the lit portal. Banking refuels you. Don't get caught.${extra}`, TOUCH ? 'drag · roll  ·  HOP button · hop' : 'WASD or hold left-click + drag · roll  ·  SPACE or right-click · hop', 4000);
+    showOverlay(level.title, `Bank <b>${level.goal}</b> marbles at the lit portal. Banking refuels you. Don't get caught.${extra}`,
+      waitTap ? '<b>▶ TAP TO START</b><br>drag · roll  ·  HOP button · hop' : TOUCH ? 'drag · roll  ·  HOP button · hop' : 'WASD or hold left-click + drag · roll  ·  SPACE or right-click · hop',
+      waitTap ? 0 : 4000);
   }
 }
 
@@ -183,7 +196,7 @@ function setMode(name) {
   mode = modes[name];
   document.querySelectorAll('[data-mode]').forEach((b) => b.classList.toggle('active', b.dataset.mode === name));
   $('help').innerHTML = HELP[name];
-  overlay.classList.remove('on');
+  if (!waitTap) overlay.classList.remove('on'); // the TAP TO START sheet stays until that tap
   document.body.dataset.mode = name;
   setThemeUI(name === 'cage' ? modes.cage.theme : THEMES.cobalt);
 }
@@ -257,8 +270,9 @@ function updateHud() {
 }
 
 // ---------- loop ----------
+let lastSize = '';
 function resize() {
-  const w = innerWidth, h = innerHeight, dpr = Math.min(devicePixelRatio, TOUCH ? 1.25 : 1.75); // phones: fewer pixels, steadier frames
+  const w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight, dpr = Math.min(devicePixelRatio, TOUCH ? 1.25 : 1.75); // phones: fewer pixels, steadier frames
   renderer.setPixelRatio(dpr);
   renderer.setSize(w, h, false);
   post.setSize(w, h, dpr);
@@ -270,8 +284,13 @@ function resize() {
     m.scene.traverse((o) => { if (o.material && o.material.isLineMaterial) o.material.resolution.set(w, h); });
   }
   for (const lm of app.mats.allLines()) lm.resolution.set(w, h);
+  lastSize = `${w}x${h}`;
 }
 addEventListener('resize', resize);
+// Turning a phone: iOS reports the new size late, sometimes after the resize event, so check again a moment later
+const settle = () => { scrollTo(0, 0); [120, 400, 900].forEach((ms) => setTimeout(() => { if (`${canvas.clientWidth}x${canvas.clientHeight}` !== lastSize) resize(); }, ms)); };
+addEventListener('orientationchange', settle);
+visualViewport?.addEventListener('resize', settle);
 
 loadLevel(Number(new URLSearchParams(location.search).get('plane') || 1) - 1);
 setMode(location.hash === '#puzzle' ? 'puzzle' : 'cage');
@@ -316,8 +335,9 @@ function renderFrame(dt) {
 function tick(now) {
   const dt = Math.min(0.033, (now - last) / 1000);
   last = now;
+  if (waitTap) input.endFrame(); // waiting for the first tap: the world is drawn but holds still
   handleGlobalKeys();
-  mode.update(dt, input);
+  mode.update(waitTap ? 0 : dt, input);
   input.endFrame();
   renderFrame(dt);
   updateHud();

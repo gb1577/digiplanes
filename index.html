@@ -13,7 +13,7 @@
     --mono: 'IBM Plex Mono', ui-monospace, monospace; --num: 'Chakra Petch', ui-monospace, monospace; }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: var(--mono); }
-  canvas { display: block; width: 100vw; height: 100vh; touch-action: none; } /* touch drags steer, never scroll or zoom */
+  canvas { display: block; position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; } /* touch drags steer, never scroll or zoom; fixed + 100% (not 100vh) matches the visible screen on iPhone, also after rotating */
   .hud { position: fixed; pointer-events: none; }
 
   /* sheet border, rulers and registration corners */

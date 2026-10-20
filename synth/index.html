@@ -287,6 +287,7 @@
   .ptabs { display: none; }
   @media (pointer: coarse) {
     html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+    body { position: fixed; inset: 0; height: auto; } /* pinned to the screen: turning the phone can't leave the page scrolled or shifted */
     body { min-height: 0; padding: calc(10px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 0 calc(16px + env(safe-area-inset-left)); }
     #frame, footer, .box > h2, .knobs .sub { display: none; }
     .sheet { height: 100%; display: flex; flex-direction: column; gap: 8px; max-width: none; }
@@ -872,6 +873,8 @@ function ring(n, color) {
 }
 fitKeys();
 addEventListener('resize', fitKeys);
+// turning a phone: iOS reports the new size late, so re-fit the keyboard again once it has settled
+addEventListener('orientationchange', () => [150, 500].forEach((ms) => setTimeout(() => { scrollTo(0, 0); fitKeys(); }, ms)));
 
 // every finger (or the mouse) holds its own note, so chords work on touch screens; a note only
 // stops when no finger is left on it, so sliding two fingers over the same key can't cut it off
@@ -1181,6 +1184,20 @@ GESTURES.forEach((t) => addEventListener(t, powerOn, { capture: true }));
 // touch screens: like the game, the synth never zooms. iOS ignores user-scalable=no for pinches, so stop them here
 // (double-tap zoom is already off through touch-action in the stylesheet)
 if (matchMedia('(pointer: coarse)').matches) document.addEventListener('gesturestart', (e) => e.preventDefault());
+// iPhone/iPad fallback for double-tap zoom, in case Safari ignores touch-action: a second tap within 350 ms has its
+// default (the zoom) cancelled, and the button it landed on is clicked here instead, so quick repeated taps still work.
+// Keys, knobs and the vector pad run on pointer events, which this doesn't touch.
+if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+  let lastTap = 0;
+  document.addEventListener('touchend', (e) => {
+    const now = e.timeStamp;
+    if (now - lastTap < 350 && e.cancelable && !e.target.closest('input, select')) {
+      e.preventDefault();
+      e.target.closest('button, a, tr.song')?.click();
+    }
+    lastTap = now;
+  }, { passive: false });
+}
 window.glassfm = { engine, state, player, applyPalette }; // handy for debugging in the console
 }
 </script>
