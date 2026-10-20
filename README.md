@@ -1,13 +1,16 @@
+![Digiplanes](docs/poster.jpg)
+
 # Digiplanes
 
 A small Three.js browser game drawn like a technical drawing. You roll a wireframe cage across
 15 themed planes, each with its own palette and its own soundtrack.
 
-![Cobalt plane](docs/cobalt.jpg)
-
-| Bubblegum | Puzzle mode |
+| | |
 |---|---|
-| ![Bubblegum plane](docs/bubblegum.jpg) | ![Puzzle mode](docs/puzzle.jpg) |
+| ![Cobalt](docs/cobalt.jpg) | ![Noir](docs/noir.jpg) |
+| ![Amber](docs/amber.jpg) | ![Neon](docs/neon.jpg) |
+| ![Ember](docs/ember.jpg) | ![Ultra](docs/ultra.jpg) |
+| ![Puzzle mode](docs/puzzle.jpg) | |
 
 - **Cage** mode: scoop up marbles (12 at most) and roll them into the lit portal to bank them.
   Banking refuels the clock, and a full load scores ×2. The hunter cage gets faster after every
