@@ -136,6 +136,7 @@
   /* touch controls: only on coarse pointers (phones, tablets); desktop never sees them */
   #touch { display: none; }
   @media (pointer: coarse) {
+    * { touch-action: none; } /* on every element: iOS doesn't reliably apply it from html/body alone */
     html, body { touch-action: none; overscroll-behavior: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
     #touch { display: block; position: fixed; inset: 0; pointer-events: none; }
     #touch button { pointer-events: auto; touch-action: none; font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--hair);
@@ -225,6 +226,7 @@
   <button id="t-hop" data-key="Space" data-only="cage" aria-label="hop">HOP</button>
 </div>
 <script src="synth/ios-audio.js"></script> <!-- iPhone: sound through the silent switch -->
+<script src="synth/no-zoom.js"></script> <!-- touch screens: the page never zooms -->
 <script src="synth/engine.js"></script> <!-- Glass FM: plays each plane's FM song (music/fm/<plane>.js) -->
 <script type="module" src="src/main.js"></script>
 </body>

@@ -506,6 +506,7 @@ addEventListener('error', (e) => showError('Error: ' + (e.message || e.error)));
 addEventListener('unhandledrejection', (e) => showError('Error: ' + (e.reason?.message || e.reason)));
 </script>
 <script src="ios-audio.js"></script>
+<script src="no-zoom.js"></script>
 <script src="engine.js" onerror="showError('Could not load engine.js. Keep it in the same folder as index.html.')"></script>
 <!-- the game's soundtrack (music/fm), one song per plane, in plane order -->
 <script src="../music/fm/compose.js"></script>
@@ -1184,33 +1185,7 @@ function powerOn() {
   }
 }
 GESTURES.forEach((t) => addEventListener(t, powerOn, { capture: true }));
-// touch screens: like the game, the synth never zooms. iOS ignores user-scalable=no for pinches, so stop them here
-// (double-tap zoom is already off through touch-action in the stylesheet)
-if (matchMedia('(pointer: coarse)').matches) document.addEventListener('gesturestart', (e) => e.preventDefault());
-// iPhone/iPad fallback for double-tap zoom, in case Safari ignores touch-action: a second tap within 500 ms has its
-// default (the zoom) cancelled, and the button it landed on is clicked here instead, so quick repeated taps still work.
-// Keys, knobs and the vector pad run on pointer events, which this doesn't touch.
-if (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
-  let lastTap = 0;
-  document.addEventListener('touchend', (e) => {
-    const now = e.timeStamp;
-    if (now - lastTap < 500 && e.cancelable && !e.target.closest('input, select')) { // Safari's double-tap window is ~0.5 s
-      e.preventDefault();
-      e.target.closest('button, a, tr.song')?.click();
-    }
-    lastTap = now;
-  }, { passive: false });
-  // if a zoom still slips through (pinch is blocked, so you couldn't zoom back out), snap back to normal size:
-  // re-applying the viewport settings makes Safari reset its zoom
-  const vp = document.querySelector('meta[name=viewport]'), VP = vp?.content;
-  let snapping = false;
-  visualViewport?.addEventListener('resize', () => {
-    if (!vp || snapping || visualViewport.scale <= 1.01) return;
-    snapping = true;
-    vp.content = VP.replace('maximum-scale=1', 'maximum-scale=1.01');
-    setTimeout(() => { vp.content = VP; scrollTo(0, 0); snapping = false; }, 80);
-  });
-}
+// zoom protection for touch screens lives in no-zoom.js (shared with the game)
 window.glassfm = { engine, state, player, applyPalette }; // handy for debugging in the console
 }
 </script>
