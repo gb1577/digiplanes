@@ -1,5 +1,5 @@
 {
-  "name": "digi-planes",
+  "name": "digiplanes",
   "version": "1.0.0",
   "description": "A small Three.js browser game drawn like a technical drawing",
   "scripts": {
