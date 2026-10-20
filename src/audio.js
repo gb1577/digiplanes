@@ -26,6 +26,13 @@ async function loadSong(id) {
   return find();
 }
 const hz = (semi, base = 523.25) => base * Math.pow(2, semi / 12);
+// Events a browser accepts as the gesture that may start audio. iOS Safari ignores touchstart/pointerdown
+// for this and only takes the end of a tap (touchend, pointerup, click).
+const GESTURES = ['keydown', 'pointerdown', 'pointerup', 'touchend', 'click'];
+function onGesture(fn) {
+  const once = () => { GESTURES.forEach((t) => removeEventListener(t, once, true)); fn(); };
+  GESTURES.forEach((t) => addEventListener(t, once, { capture: true, passive: true }));
+}
 
 export class Sound {
   constructor() {
@@ -37,8 +44,7 @@ export class Sound {
     // ?silent in the URL disables audio entirely (used for automated tests)
     this.silent = new URLSearchParams(location.search).has('silent');
     const unlock = () => this.start();
-    addEventListener('keydown', unlock);
-    addEventListener('pointerdown', unlock);
+    GESTURES.forEach((t) => addEventListener(t, unlock, { capture: true, passive: true }));
     // go quiet in a background tab (e.g. while the ♪ SYNTH tab is open), pick up again on return
     document.addEventListener('visibilitychange', () => {
       if (!this.ctx) return;
@@ -49,7 +55,9 @@ export class Sound {
 
   start() {
     if (this.silent) return;
-    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    window.iosAudio?.(); // iPhone: play through the silent switch (synth/ios-audio.js)
+    // 'suspended' before the first real tap, 'interrupted' on iOS after a call or the lock screen
+    if (this.ctx) { if (this.ctx.state !== 'running' && !document.hidden) this.ctx.resume().catch(() => {}); return; }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     const ctx = (this.ctx = new AC());
@@ -295,7 +303,7 @@ export class Sound {
       if (!el._src) { el._src = this.ctx.createMediaElementSource(el); const g = this.ctx.createGain(); g.gain.value = 0.8; el._src.connect(g).connect(this.master); }
       el.play().catch(() => {});
     };
-    if (this.ok) play(); else addEventListener('keydown', play, { once: true });
+    if (this.ok) play(); else onGesture(play);
   }
   stopMusic() {
     if (this.track) { this.track.pause(); this.track = null; }
@@ -325,7 +333,7 @@ export class Sound {
       if (this.fmSong === song) this.fmPlayer.play(song, { loop: true });
     };
     if (this.ok) play();
-    else { const once = () => { removeEventListener('pointerdown', once); play(); }; addEventListener('keydown', once, { once: true }); addEventListener('pointerdown', once); }
+    else onGesture(play);
   }
 
   over() {

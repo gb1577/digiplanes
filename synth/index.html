@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Glass FM · Digiplanes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -218,6 +218,9 @@
   .kbd { position: sticky; bottom: 0; z-index: 5; padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
     background: var(--bg); border-top: 1px solid var(--hair); }
   @media (pointer: coarse) {
+    /* iPhone: quick repeated taps (knobs, keys, buttons) would double-tap-zoom the page; pinch still works */
+    html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; }
+    .field input, .field select { font-size: 16px; } /* under 16px, iOS zooms in when a field is focused */
     .keys { height: 150px; }
     .keys2 { display: none; } .touchnote { display: block; }
     .tb { padding: 8px 12px; }
@@ -278,6 +281,69 @@
   .melody > button.on { opacity: 1; background: var(--acc); color: var(--bg); }
   .youplay { display: none; color: var(--acc); letter-spacing: .14em; animation: guide .8s ease-in-out infinite alternate; }
   body.playalong .youplay { display: inline; }
+  /* ---- touch screens (phones and iPads): everything on one screen, no page scrolling. Header on top, a tab
+     strip picks one panel, the keyboard sits at the bottom. Desktop (and an iPad with a trackpad) never matches. ---- */
+  .ptabs { display: none; }
+  @media (pointer: coarse) {
+    html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+    body { min-height: 0; padding: calc(10px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 0 calc(16px + env(safe-area-inset-left)); }
+    #frame, footer, .box > h2, .knobs .sub { display: none; }
+    .sheet { height: 100%; display: flex; flex-direction: column; gap: 8px; max-width: none; }
+    header { flex: none; margin: 0; gap: 8px 14px; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }
+    .ptabs { display: flex; flex: none; width: 100%; max-width: none; margin: 0; }
+    .ptabs > button { flex: 1; padding: 10px 2px; text-align: center; }
+    .grid { flex: 1; min-height: 0; display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); gap: 0; align-items: stretch; }
+    .col, .row3 { display: contents; }
+    .grid .box { grid-area: 1 / 1; display: none; margin: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; }
+    .grid .box.cur { display: block; }
+    .grid .vbox.cur { display: flex; justify-content: center; align-items: center; container-type: size; }
+    .vector { width: min(100cqw, 100cqh); height: min(100cqw, 100cqh); max-width: none; } /* largest square that fits */
+    .plbox { height: auto; } .plscroll { max-height: none; }
+    .kbd { position: static; flex: none; padding: 4px 0 calc(6px + env(safe-area-inset-bottom)); }
+    .kbar { margin-bottom: 4px; }
+    .keys { height: 180px; margin-bottom: 4px; }
+  }
+  /* phones: compact header (no scope or stats), smaller knobs */
+  @media (pointer: coarse) and (max-width: 560px), (pointer: coarse) and (max-height: 500px) {
+    body { padding: calc(6px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) 0 calc(10px + env(safe-area-inset-left)); }
+    .sheet { gap: 6px; }
+    .subtitle, .scope, .stats { display: none; }
+    header { gap: 6px 10px; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'a a' 'r m'; }
+    header .tabs { flex-wrap: nowrap; width: auto; }
+    header > :first-child { grid-area: a; min-width: 0; } header > .readout { grid-area: r; margin: 0; } header > .master { grid-area: m; }
+    .brand { font-size: 12px; } .tabs { margin-top: 5px; } .tabs > * { padding: 6px 8px; font-size: 9px; letter-spacing: .14em; }
+    .readout { grid-template-columns: 1fr; } .readout .main { padding: 4px 10px; } .readout .big { font-size: 14px; }
+    .master { gap: 6px; } .master .stack { grid-auto-flow: column; gap: 6px; }
+    #kVol svg { width: 38px; height: 38px; } #kVol .lbl { display: none; } #kVol .val { font-size: 10px; }
+    .ptabs > button { padding: 8px 2px; }
+    .grid .box { padding: 8px 10px; }
+    .knob svg { width: 52px; height: 52px; }
+    .midibar { margin: 0; } .midibar > :not(.youplay) { display: none; } /* MIDI cables are rare on a phone */
+    .kbar .tb { padding: 6px 10px; }
+    .keys { height: 160px; }
+  }
+  /* phone held sideways: header in one row, knobs in one row, short keyboard */
+  @media (pointer: coarse) and (max-height: 500px) {
+    header { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: 'a r m'; }
+    .tabs { margin-top: 3px; }
+    .presets { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 8px; }
+    .preset:nth-child(-n+4) { border-top: 0; }
+    #patchKnobs { grid-template-columns: repeat(11, minmax(0, 1fr)); }
+    .fxrow { grid-template-columns: minmax(0, 1fr) 220px; } #fxKnobs { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .knob svg { width: 44px; height: 44px; } .knob .lbl { font-size: 8px; letter-spacing: .1em; }
+    .fields { gap: 4px; } .field input, .field select { padding: 2px 6px; } .btnrow { margin-top: 4px; } .fxrow .tb { padding: 5px 8px; }
+    .keys { height: 92px; }
+  }
+  /* iPads: room for the full header and the 6-across knob grid */
+  @media (pointer: coarse) and (min-width: 561px) and (min-height: 501px) {
+    .readout { grid-template-columns: 1fr 200px; } .scope { height: auto; border-top: 0; border-left: 1px solid var(--faint); }
+    .knobs { grid-template-columns: repeat(6, minmax(0, 1fr)); } .fxrow { grid-template-columns: minmax(0, 1fr) 230px; }
+    .knob svg { width: 70px; height: 70px; }
+  }
+  @media (pointer: coarse) and (min-width: 561px) and (min-height: 501px) and (max-width: 1000px) {
+    header { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'a m' 'r r'; }
+    header > :first-child { grid-area: a; } header > .readout { grid-area: r; margin: 0; } header > .master { grid-area: m; }
+  }
 </style>
 </head>
 <body>
@@ -324,19 +390,20 @@
     </div>
   </header>
 
+  <nav class="tabs ptabs" id="ptabs"><button data-p="patches">PATCH</button><button data-p="voice">VOICE</button><button data-p="vector">VECTOR</button><button data-p="space">SPACE</button><button data-p="songs">SONGS</button></nav>
   <div class="grid">
     <div class="col">
       <div class="row3">
-        <section class="box">
+        <section class="box" data-p="patches">
           <h2><span><em>01</em>PATCHES</span></h2>
           <div class="presets" id="presets"></div>
           <div class="btnrow"><button class="tb" id="resetPatch">RESET PATCH</button></div>
         </section>
-        <section class="box">
+        <section class="box" data-p="voice">
           <h2><span><em>02</em>VOICE</span><span class="r" id="editingName"></span></h2>
           <div class="knobs" id="patchKnobs"></div>
         </section>
-        <section class="box">
+        <section class="box vbox" data-p="vector">
           <h2><span><em>03</em>VECTOR</span></h2>
           <div class="vector" id="vector">
             <i class="hx"></i><i class="hy"></i><i class="puck"></i><span class="tag" id="vtag"></span>
@@ -346,7 +413,7 @@
         </section>
       </div>
 
-      <section class="box">
+      <section class="box" data-p="space">
         <h2><span><em>04</em>SPACE</span><span class="r">echo · hall · converter</span></h2>
         <div class="fxrow">
           <div class="knobs" id="fxKnobs"></div>
@@ -365,7 +432,7 @@
       </section>
     </div>
 
-    <section class="box plbox">
+    <section class="box plbox" data-p="songs">
       <h2><span><em>05</em>PLAYLIST · DIGIPLANES</span><span class="r" id="songPos"></span></h2>
       <div class="plctl">
         <div class="tabs" style="margin:0">
@@ -431,6 +498,7 @@ function showError(msg) {
 addEventListener('error', (e) => showError('Error: ' + (e.message || e.error)));
 addEventListener('unhandledrejection', (e) => showError('Error: ' + (e.reason?.message || e.reason)));
 </script>
+<script src="ios-audio.js"></script>
 <script src="engine.js" onerror="showError('Could not load engine.js. Keep it in the same folder as index.html.')"></script>
 <!-- the game's soundtrack (music/fm), one song per plane, in plane order -->
 <script src="../music/fm/compose.js"></script>
@@ -457,8 +525,13 @@ const $ = (s) => document.querySelector(s);
 const engine = new FMEngine();
 // go quiet in a background tab (e.g. back in the game), pick up again on return
 document.addEventListener('visibilitychange', () => {
-  if (engine.ctx) document.hidden ? engine.ctx.suspend() : engine.ctx.resume();
+  if (engine.ctx) document.hidden ? engine.ctx.suspend() : engine.ctx.resume().catch(() => {});
 });
+// iOS refuses to resume without a tap and parks the context as 'interrupted' after a call or the lock
+// screen, so any tap wakes it again
+for (const t of ['touchend', 'click']) addEventListener(t, () => {
+  if (engine.ctx && engine.ctx.state !== 'running' && !document.hidden) { window.iosAudio?.(); engine.ctx.resume().catch(() => {}); }
+}, { capture: true, passive: true });
 const FX_DEFAULTS = { ...engine.fx }; // the effects as the engine starts, before any saved tweaks
 const DEFAULTS = structuredClone(PRESETS);
 const STORE = 'glassfm.v1';
@@ -1069,12 +1142,23 @@ $('#songMid').onclick = () => {
 };
 renderPlaylist();
 
+// ---------- phone: one panel at a time, picked from the tab strip (the strip only shows on phones) ----------
+function showPanel(p) {
+  document.querySelectorAll('.grid [data-p]').forEach((s) => s.classList.toggle('cur', s.dataset.p === p));
+  document.querySelectorAll('#ptabs [data-p]').forEach((b) => b.classList.toggle('on', b.dataset.p === p));
+  try { localStorage.setItem('glassfm-panel', p); } catch { /* storage blocked */ }
+  requestAnimationFrame(fitKeys);
+}
+document.querySelectorAll('#ptabs [data-p]').forEach((b) => (b.onclick = () => showPanel(b.dataset.p)));
+{ let p = 'patches'; try { p = localStorage.getItem('glassfm-panel') || p; } catch { /* storage blocked */ } showPanel(p); }
+
 // ---------- boot ----------
 buildPatchKnobs(); renderPresets(); lcdPatch();
 renderMidi();
 $('#powerBtn').onclick = async () => {
   try {
     $('#powerMsg').textContent = 'Starting audio…';
+    window.iosAudio?.(); // iPhone: play through the silent switch
     await engine.start();
     engine.setVolume(state.volume, state.muted);
     $('#power').classList.add('hidden');
