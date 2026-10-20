@@ -144,7 +144,7 @@
     #tpad { position: absolute; left: calc(18px + env(safe-area-inset-left)); bottom: calc(18px + env(safe-area-inset-bottom));
       display: grid; grid-template-columns: repeat(3, 46px); gap: 6px; }
     #tpad button { height: 40px; font-size: 11px; letter-spacing: .12em; }
-    #t-hop { position: absolute; right: calc(22px + env(safe-area-inset-right)); bottom: calc(22px + env(safe-area-inset-bottom));
+    #t-hop { position: absolute; left: calc(49px + env(safe-area-inset-left)); bottom: calc(116px + env(safe-area-inset-bottom)); /* bottom-left, just above the button pad */
       width: 88px; height: 88px; border-radius: 50%; font-family: var(--num); font-weight: 700; font-size: 15px; letter-spacing: .25em;
       color: var(--cy); border: 2px solid var(--cy); }
     body[data-mode=puzzle] [data-only=cage], body[data-mode=cage] [data-only=puzzle] { display: none; }
@@ -152,7 +152,7 @@
     #help { display: none; left: 18px; right: 18px; bottom: auto; top: 50%; transform: translateY(-50%); max-width: none; z-index: 2; }
     body.show-help #help { display: block; }
     #tblock { display: none; }
-    #prompt { bottom: calc(132px + env(safe-area-inset-bottom)); }
+    #prompt { bottom: calc(220px + env(safe-area-inset-bottom)); } /* clear of HOP and the button pad */
   }
   @media (pointer: coarse) and (max-width: 760px), (pointer: coarse) and (max-height: 500px) {
     #frame { inset: 6px; }
