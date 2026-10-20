@@ -2,6 +2,8 @@
 
 # Digiplanes
 
+**[▶ Play in your browser](https://gb1577.github.io/digiplanes/)**
+
 A small Three.js browser game drawn like a technical drawing. You roll a wireframe cage across
 15 themed planes, each with its own palette and its own soundtrack.
 
