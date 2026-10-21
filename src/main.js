@@ -22,6 +22,7 @@ class Input {
     canvas.addEventListener('pointerdown', (e) => {
       if (!e.isPrimary) return; // a second finger on the canvas neither clicks nor drags
       this.lastX = e.clientX; this.lastY = e.clientY;
+      this.press = e.pointerType === 'mouse' && e.button === 0 ? { t: e.timeStamp, moved: 0 } : null;
       const r = canvas.getBoundingClientRect();
       this.click = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
       this.hit.add('Pointer'); // any click dismisses the intro card
@@ -42,12 +43,37 @@ class Input {
       const dy = e.pointerType === 'mouse' ? e.movementY : e.clientY - this.lastY;
       this.lastX = e.clientX; this.lastY = e.clientY;
       if (this.dragging) { this.mdx += dx; this.mdy += dy; }
+      if (this.press) this.press.moved += Math.abs(dx) + Math.abs(dy);
     });
-    const stop = (e) => { if (e.isPrimary) this.buttons(e); };
+    // Trackpad tap = hop, once the game has seen a trackpad swipe. The browser can't tell a trackpad tap from a
+    // mouse click, so before any swipe (and always with a mouse) a click works as before: press and drag to roll.
+    const tapHop = (e) => {
+      const p = this.press; this.press = null;
+      if (!this.trackpad || !p || e.pointerType !== 'mouse' || e.button !== 0) return;
+      if (e.timeStamp - p.t > 250 || p.moved > 6) return; // a press-and-drag, not a tap
+      this.hit.add('Space'); this.down.add('Space');
+      setTimeout(() => { if (!this.rightDown) this.down.delete('Space'); }, 90); // a tap gives the short hop
+    };
+    const stop = (e) => { if (e.isPrimary) { tapHop(e); this.buttons(e); } };
     canvas.addEventListener('pointerup', stop);
     canvas.addEventListener('pointercancel', (e) => { if (e.isPrimary) this.buttons({ buttons: 0 }); });
     canvas.addEventListener('lostpointercapture', (e) => { if (e.isPrimary) this.buttons({ buttons: 0 }); });
     addEventListener('blur', () => this.buttons({ buttons: 0 }));
+    // Trackpads (MacBook, PC precision touchpads): a two-finger swipe arrives as wheel events and steers like a
+    // drag, no click needed. A mouse wheel is told apart and does nothing, as before. Pinch (ctrl + wheel) is
+    // ignored, and the page never scrolls or zooms from it.
+    const MAC = /Mac/.test(navigator.platform);
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (e.ctrlKey) return;
+      const trackpad = e.deltaX !== 0 || (e.wheelDeltaY ? e.wheelDeltaY === -3 * e.deltaY : e.deltaMode === 0);
+      if (!trackpad || e.deltaMode !== 0) return;
+      this.trackpad = true;
+      // macOS scrolls "naturally" (the content follows the fingers), Windows the other way round:
+      // either way the cage rolls the way the fingers move
+      const s = MAC ? -1 : 1;
+      this.mdx += s * e.deltaX; this.mdy += s * e.deltaY;
+    }, { passive: false });
     // right button is the hop: never open the browser menu anywhere on the page
     addEventListener('contextmenu', (e) => e.preventDefault(), { capture: true });
     // on-screen touch buttons (#touch, shown on coarse pointers) press the same key codes;
@@ -124,6 +150,7 @@ const useProbe = (mats) => { for (const m of [mats.chrome, mats.chromeBar]) { m.
 useProbe(app.mats);
 
 const input = new Input(canvas);
+
 const modes = { cage: null, puzzle: new PuzzleMode(app) };
 let mode = null;
 let levelIdx = 0;
