@@ -66,8 +66,10 @@ class Input {
     canvas.addEventListener('wheel', (e) => {
       e.preventDefault();
       if (e.ctrlKey) return;
-      const trackpad = e.deltaX !== 0 || (e.wheelDeltaY ? e.wheelDeltaY === -3 * e.deltaY : e.deltaMode === 0);
-      if (!trackpad || e.deltaMode !== 0) return;
+      // a notched mouse wheel scrolls in lines (Firefox) or in whole steps of 120 (wheelDeltaY, the old API);
+      // anything else (small, smooth pixel steps, often sideways too) is a finger swipe
+      const notched = e.deltaMode !== 0 || (e.deltaX === 0 && e.wheelDeltaY && Math.abs(e.wheelDeltaY) % 120 === 0);
+      if (notched) return;
       this.trackpad = true;
       // macOS scrolls "naturally" (the content follows the fingers), Windows the other way round:
       // either way the cage rolls the way the fingers move

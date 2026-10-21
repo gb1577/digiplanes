@@ -12,7 +12,7 @@
     --hair: color-mix(in srgb, var(--ink) 38%, transparent); --faint: color-mix(in srgb, var(--ink) 18%, transparent);
     --mono: 'IBM Plex Mono', ui-monospace, monospace; --num: 'Chakra Petch', ui-monospace, monospace; }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); font-family: var(--mono); }
+  html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; background: var(--bg); color: var(--ink); font-family: var(--mono); }
   canvas { display: block; position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; } /* touch drags steer, never scroll or zoom; fixed + 100% (not 100vh) matches the visible screen on iPhone, also after rotating */
   .hud { position: fixed; pointer-events: none; }
 
